@@ -3,6 +3,7 @@ import React, {useCallback, useRef} from 'react';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import {withStyles} from '@material-ui/core';
+import getAllPlanetsHelper from '../helpers/getInfoHelper';
 
 interface ISearchProps {
   name?: string;
@@ -24,8 +25,14 @@ const Search: React.FC<ISearchProps> = () => {
   const inputEl = useRef<HTMLInputElement>(null);
   const [isButtonDisabled, setButtonDisabled] = React.useState<boolean>(true);
 
-  const handleClick = useCallback(() => {
+  const handleClick = React.useCallback(async () => {
+    setButtonDisabled(true);
     console.log(inputEl.current.value);
+    const fetchUrl = 'https://swapi.dev/api/planet/Alderaan';
+
+    const request = await getAllPlanetsHelper(fetchUrl);
+    console.log(request);
+    setButtonDisabled(false);
   }, []);
 
   const handleInputChange = useCallback(() => {

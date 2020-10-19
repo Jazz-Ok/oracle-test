@@ -1,7 +1,7 @@
 import React from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import {IAllPlanets} from './components/IAllPlanets';
-import {IPlanet} from './components/IPlanets';
+import {IPlanet} from './components/IPlanet';
 import RequestUrl from './enums';
 import appStyles from './configuration/styles';
 import Pagination from '@material-ui/lab/Pagination';
@@ -60,7 +60,25 @@ const App: React.FC = () => {
   const renderPlanets = React.useCallback(() => {
     return planetsList?.results
       .slice((page - 1) * itemsPerPage, page * itemsPerPage)
-      .map((planet: IPlanet) => <Planet key={planet.name} name={planet.name} />);
+      .map((planet: IPlanet) => (
+        <Planet
+          key={planet.name}
+          name={planet.name}
+          climate={planet.climate}
+          created={planet.created}
+          diameter={planet.diameter}
+          edited={planet.edited}
+          films={planet.films}
+          gravity={planet.gravity}
+          orbital_period={planet.orbital_period}
+          population={planet.population}
+          residents={planet.residents}
+          rotation_period={planet.rotation_period}
+          surface_water={planet.surface_water}
+          terrain={planet.terrain}
+          url={planet.url}
+        />
+      ));
   }, [page, planetsList?.results]);
 
   return (

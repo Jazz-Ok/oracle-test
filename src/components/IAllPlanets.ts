@@ -1,4 +1,4 @@
-import {IPlanet} from './IPlanets';
+import {IPlanet} from './IPlanet';
 
 export interface IAllPlanets {
   count: number;
