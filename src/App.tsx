@@ -18,6 +18,11 @@ interface IAppStyleProps {
   color: string;
 }
 
+const StyledPagination = styled(Pagination)`
+  display: flex;
+  justify-content: center;
+`;
+
 const rootEl = document.getElementById('vladimir-app-root') as HTMLDivElement;
 
 /* Applicaion is localized and prepared for reading localizations from markup */
@@ -83,19 +88,21 @@ const App: React.FC = () => {
           <CircularProgress color="secondary" />
         </Spinner>
       )}
-      {!isLoading && <Search storedPlanetModel={planetsList} />}
-      {planetsList && renderPlanets()}
+      {!isLoading && <Search storedPlanetModel={planetsList} clearState={setPlanetsList} />}
+      {!isLoading && planetsList && renderPlanets()}
 
-      <Pagination
-        showFirstButton
-        showLastButton
-        defaultPage={page}
-        count={noOfPages}
-        page={page}
-        onChange={handlePageChange}
-        variant="outlined"
-        color="secondary"
-      />
+      {planetsList && (
+        <StyledPagination
+          showFirstButton
+          showLastButton
+          defaultPage={page}
+          count={noOfPages}
+          page={page}
+          onChange={handlePageChange}
+          variant="outlined"
+          color="secondary"
+        />
+      )}
     </IntlProvider>
   );
 };

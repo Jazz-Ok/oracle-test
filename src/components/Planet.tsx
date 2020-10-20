@@ -1,6 +1,5 @@
 import styled from 'styled-components';
-import {Button} from '@material-ui/core';
-import React, {useCallback} from 'react';
+import React from 'react';
 import {IPlanet} from './IPlanet';
 import {PlanetEnum} from '../enums';
 import InfoRow from './InfoRow';
@@ -22,10 +21,6 @@ const StyledInfoList = styled.ul`
   list-style-type: none;
 `;
 
-const StyledPlanetDetails = styled(Button)`
-  display: inline-block;
-`;
-
 const Planet: React.FC<IPlanet> = ({
   name,
   climate,
@@ -39,15 +34,11 @@ const Planet: React.FC<IPlanet> = ({
   residents,
   rotation_period,
   surface_water,
-  terrain,
-  url
-}) => {
-  const handleDetailsClick = useCallback(() => {
-    console.log(url);
-  }, [url]);
-  return (
-    <>
-      <StyledName>{name}</StyledName>
+  terrain
+}) => (
+  <>
+    <StyledName>{name}</StyledName>
+    {name && (
       <StyledInfoList>
         <InfoRow rowName={PlanetEnum.climate} rowData={climate} />
         <InfoRow rowName={PlanetEnum.created} rowData={formatDate(created)} />
@@ -62,9 +53,8 @@ const Planet: React.FC<IPlanet> = ({
         <InfoRow rowName={PlanetEnum.surface_water} rowData={surface_water} />
         <InfoRow rowName={PlanetEnum.terrain} rowData={terrain} />
       </StyledInfoList>
-      <StyledPlanetDetails onClick={handleDetailsClick}>Show more</StyledPlanetDetails>
-    </>
-  );
-};
+    )}
+  </>
+);
 
 export default Planet;

@@ -5,9 +5,13 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import {withStyles} from '@material-ui/core';
 import {FormattedMessage} from 'react-intl';
+import {UrlEnum} from 'src/enums';
+import {IPlanet} from './IPlanet';
+import Planet from './Planet';
 
 interface ISearchProps {
   storedPlanetModel: IAllPlanets;
+  clearState: (_: null) => void;
 }
 
 const FormControl = styled.section`
@@ -22,117 +26,88 @@ const StyledButton = withStyles({
   }
 })(Button);
 
-// const params = {
-//   method: 'GET'
-// };
-
-const Search: React.FC<ISearchProps> = ({storedPlanetModel}) => {
+const Search: React.FC<ISearchProps> = ({clearState}) => {
   const inputEl = useRef<HTMLInputElement>(null);
   const [isButtonDisabled, setButtonDisabled] = React.useState<boolean>(true);
   const [isInputDisabled, setInputDisabled] = React.useState<boolean>(false);
-  const [planetModel, setPlanetModel] = React.useState<IAllPlanets>(storedPlanetModel);
-
-  console.log('planetsList state: ', planetModel);
-
-  let fetchedPlanetModel = storedPlanetModel;
+  const [searchedPlanet, setSearchedPlanet] = React.useState<IPlanet>(null);
 
   const handleClick = React.useCallback(() => {
     setButtonDisabled(true);
     setInputDisabled(true);
+    const planets = [];
+    const planetsUrls = [
+      `${UrlEnum.ALL_PLANETS_URL}?page=1`,
+      `${UrlEnum.ALL_PLANETS_URL}?page=2`,
+      `${UrlEnum.ALL_PLANETS_URL}?page=3`,
+      `${UrlEnum.ALL_PLANETS_URL}?page=4`,
+      `${UrlEnum.ALL_PLANETS_URL}?page=5`,
+      `${UrlEnum.ALL_PLANETS_URL}?page=6`
+    ];
 
-    const work = async () => {
-      let i = 0;
-
-      while (planetModel.next && i < 10) {
-        const results = storedPlanetModel.results.filter(
-          (x) => x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
-        );
-        if (results.length) {
-          console.log('gotcha: ', results);
-          setButtonDisabled(false);
-          setInputDisabled(false);
-          break;
-        }
-        const response = await fetch(fetchedPlanetModel.next);
-        fetchedPlanetModel = await response.json();
-        setPlanetModel(fetchedPlanetModel);
-        console.log(fetchedPlanetModel);
-        i++;
-      }
+    let results;
+    const fetchPlanets = (url: string) => {
+      fetch(url)
+        .then((res) => res.json())
+        .then((result) => {
+          planets.push(result.results);
+          results = result.results.filter(
+            (x) => x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
+          );
+          if (results?.length) {
+            setSearchedPlanet(results);
+            clearState(null);
+            console.log(inputEl.current.value);
+          }
+        });
     };
-    work();
 
-    // const searchPlanet = async () => {
-    //   const searchedPlanet = await searchInStored(planetModel);
+    let i = 0;
+    while (i < 6) {
+      fetchPlanets(planetsUrls[i]);
+      if (results?.length) {
+        console.log(inputEl.current.value);
+        break;
+      }
+      i++;
+    }
 
-    //   if (searchedPlanet.length) {
-    //     console.log('gotcha: ', searchedPlanet);
-    //     // done!
-    //   } else if (!searchedPlanet.length && planetModel.next) {
-    //     let i = 0;
-    //     while (planetModel.next && i < 10) {
-    //       const res = await getPlanets(planetModel.next);
-    //       const json = await res;
-    //       console.log(json);
-    //       i++;
-    //     }
-    //     // fetch next
-    //   }
-    // };
-  }, [planetModel]);
-
-  // const searchInStored = async (storedPlanetModel: IAllPlanets) => {
-  //   const results = storedPlanetModel.results.filter(
-  //     (x) => x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
-  //   );
-  //   console.log('Planets: ', storedPlanetModel);
-  //   console.log('Search term: ', inputEl.current.value);
-
-  //   console.log('Search result: ', results);
-  //   return results;
-  // };
-  // const getPlanets = async (url: string) => {
-  //   const fetchUrl = url.replace(/^http:\/\//i, 'https://');
-
-  //   const fetchPlanets = async () => {
-  //     fetch(fetchUrl, params)
-  //       .then((res) => res.json())
-  //       .then((result) => {
-  //         setPlanetModel(result);
-  //         searchInStored(planetModel);
-  //       });
-  //   };
-  //   fetchPlanets();
-  // };
+    setButtonDisabled(false);
+    setInputDisabled(false);
+  }, []);
 
   const handleInputChange = useCallback(() => {
     setButtonDisabled(!inputEl.current.value.length);
   }, [inputEl]);
 
   return (
-    <FormControl>
-      <FormattedMessage id="planetName">
-        {(placeholder) => (
-          <TextField
-            inputRef={inputEl}
-            variant="outlined"
-            label={placeholder}
-            size="small"
-            onChange={handleInputChange}
-            disabled={isInputDisabled}
-          />
-        )}
-      </FormattedMessage>
+    <>
+      <FormControl>
+        <FormattedMessage id="planetName">
+          {(placeholder) => (
+            <TextField
+              inputRef={inputEl}
+              variant="outlined"
+              label={placeholder}
+              size="small"
+              onChange={handleInputChange}
+              disabled={isInputDisabled}
+            />
+          )}
+        </FormattedMessage>
 
-      <StyledButton
-        onClick={handleClick}
-        variant="outlined"
-        color="primary"
-        disabled={isButtonDisabled}
-      >
-        <FormattedMessage id="go" />
-      </StyledButton>
-    </FormControl>
+        <StyledButton
+          onClick={handleClick}
+          variant="outlined"
+          color="primary"
+          disabled={isButtonDisabled}
+        >
+          <FormattedMessage id="go" />
+        </StyledButton>
+      </FormControl>
+
+      {searchedPlanet && <Planet {...searchedPlanet} />}
+    </>
   );
 };
 
