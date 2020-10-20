@@ -2,19 +2,31 @@ import React from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import {IAllPlanets} from './components/IAllPlanets';
 import {IPlanet} from './components/IPlanet';
-import RequestUrl from './enums';
+import {UrlEnum} from './enums';
 import appStyles from './configuration/styles';
 import Pagination from '@material-ui/lab/Pagination';
 import styled from 'styled-components';
 import {createGlobalStyle} from 'styled-components';
 import Planet from 'components/Planet';
 import Search from 'components/Search';
-//import RequestButton from "components/RequestButton";
+import appConfig from './configuration/app';
+import {IntlProvider} from 'react-intl';
+import {DEFAULT_TRANSLATIONS} from './Localizations';
 
 interface IAppStyleProps {
   bodyBackground: string;
   color: string;
 }
+
+const rootEl = document.getElementById('vladimir-app-root') as HTMLDivElement;
+
+/* Applicaion is localized and prepared for reading localizations from markup */
+const translations = rootEl?.dataset.translations
+  ? {
+      ...DEFAULT_TRANSLATIONS,
+      ...JSON.parse(decodeURIComponent(rootEl.dataset.translations))
+    }
+  : DEFAULT_TRANSLATIONS;
 
 const GlobalStyle = createGlobalStyle`
 	body {
@@ -31,10 +43,10 @@ const Spinner = styled.div`
 `;
 
 const App: React.FC = () => {
-  const itemsPerPage = 5;
+  const itemsPerPage = appConfig.ITEMS_PER_PAGE;
   const [isLoading, setLoading] = React.useState<boolean>(true);
   const [planetsList, setPlanetsList] = React.useState<IAllPlanets>(null);
-  const [page, setPage] = React.useState<number>(1);
+  const [page, setPage] = React.useState<number>(appConfig.START_PAGE);
   const [noOfPages] = React.useState(Math.ceil(planetsList?.results.length / itemsPerPage));
 
   React.useEffect(() => {
@@ -43,7 +55,7 @@ const App: React.FC = () => {
     };
 
     const fetchPlanets = () => {
-      fetch(RequestUrl.ALL_PLANETS, params)
+      fetch(UrlEnum.ALL_PLANETS_URL, params)
         .then((res) => res.json())
         .then((result) => {
           setPlanetsList(result);
@@ -51,7 +63,7 @@ const App: React.FC = () => {
         });
     };
     fetchPlanets();
-  }, [isLoading]);
+  }, []);
 
   const handlePageChange = (_, value) => {
     setPage(value);
@@ -60,49 +72,31 @@ const App: React.FC = () => {
   const renderPlanets = React.useCallback(() => {
     return planetsList?.results
       .slice((page - 1) * itemsPerPage, page * itemsPerPage)
-      .map((planet: IPlanet) => (
-        <Planet
-          key={planet.name}
-          name={planet.name}
-          climate={planet.climate}
-          created={planet.created}
-          diameter={planet.diameter}
-          edited={planet.edited}
-          films={planet.films}
-          gravity={planet.gravity}
-          orbital_period={planet.orbital_period}
-          population={planet.population}
-          residents={planet.residents}
-          rotation_period={planet.rotation_period}
-          surface_water={planet.surface_water}
-          terrain={planet.terrain}
-          url={planet.url}
-        />
-      ));
-  }, [page, planetsList?.results]);
+      .map((planet: IPlanet) => <Planet key={planet.name} {...planet} />);
+  }, [page, planetsList?.results, itemsPerPage]);
 
   return (
-    <React.Fragment>
+    <IntlProvider locale="cs-CZ" messages={translations}>
       <GlobalStyle bodyBackground={appStyles.LIGHT} color={appStyles.DARK} />
       {isLoading && (
         <Spinner>
           <CircularProgress color="secondary" />
         </Spinner>
       )}
-      {!isLoading && <Search />}
+      {!isLoading && <Search storedPlanetModel={planetsList} />}
       {planetsList && renderPlanets()}
 
       <Pagination
         showFirstButton
         showLastButton
-        defaultPage={1}
+        defaultPage={page}
         count={noOfPages}
         page={page}
         onChange={handlePageChange}
         variant="outlined"
         color="secondary"
       />
-    </React.Fragment>
+    </IntlProvider>
   );
 };
 
