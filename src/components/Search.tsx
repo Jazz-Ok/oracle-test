@@ -7,11 +7,13 @@ import {withStyles} from '@material-ui/core';
 import {FormattedMessage} from 'react-intl';
 import {UrlEnum} from 'src/enums';
 import {IPlanet} from './IPlanet';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Planet from './Planet';
 
 interface ISearchProps {
   storedPlanetModel: IAllPlanets;
-  clearState: (_: null) => void;
+  clearAllState: (_: null) => void;
+  searchPlanetState: (_: IPlanet) => void;
 }
 
 const FormControl = styled.section`
@@ -26,11 +28,16 @@ const StyledButton = withStyles({
   }
 })(Button);
 
-const Search: React.FC<ISearchProps> = ({clearState}) => {
+const Spinner = styled(CircularProgress)`
+  position: relative;
+  left: 7px;
+`;
+
+const Search: React.FC<ISearchProps> = ({clearAllState, searchPlanetState}) => {
   const inputEl = useRef<HTMLInputElement>(null);
   const [isButtonDisabled, setButtonDisabled] = React.useState<boolean>(true);
   const [isInputDisabled, setInputDisabled] = React.useState<boolean>(false);
-  const [searchedPlanet, setSearchedPlanet] = React.useState<IPlanet>(null);
+  const [planetModel, setPlanetModel] = React.useState<IPlanet>(null);
 
   const handleClick = React.useCallback(() => {
     setButtonDisabled(true);
@@ -52,33 +59,38 @@ const Search: React.FC<ISearchProps> = ({clearState}) => {
         .then((result) => {
           planets.push(result.results);
           results = result.results.filter(
-            (x) => x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
+            (x: IPlanet) =>
+              x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
           );
           if (results?.length) {
-            setSearchedPlanet(results);
-            clearState(null);
-            console.log(inputEl.current.value);
+            clearAllState(null);
+            searchPlanetState(results);
+
+            setPlanetModel(results);
+            inputEl.current.value = '';
+            setButtonDisabled(false);
+          } else {
+            searchPlanetState(results);
           }
+          setInputDisabled(false);
         });
     };
 
     let i = 0;
     while (i < 6) {
       fetchPlanets(planetsUrls[i]);
-      if (results?.length) {
-        console.log(inputEl.current.value);
-        break;
-      }
+      if (results?.length) break;
       i++;
     }
-
-    setButtonDisabled(false);
-    setInputDisabled(false);
   }, []);
 
   const handleInputChange = useCallback(() => {
     setButtonDisabled(!inputEl.current.value.length);
   }, [inputEl]);
+
+  const handleFocus = useCallback(() => {
+    setButtonDisabled(!inputEl.current.value.length);
+  }, []);
 
   return (
     <>
@@ -92,6 +104,7 @@ const Search: React.FC<ISearchProps> = ({clearState}) => {
               size="small"
               onChange={handleInputChange}
               disabled={isInputDisabled}
+              onFocus={handleFocus}
             />
           )}
         </FormattedMessage>
@@ -103,10 +116,11 @@ const Search: React.FC<ISearchProps> = ({clearState}) => {
           disabled={isButtonDisabled}
         >
           <FormattedMessage id="go" />
+          {isInputDisabled && <Spinner color="primary" size={10} />}
         </StyledButton>
       </FormControl>
 
-      {searchedPlanet && <Planet {...searchedPlanet} />}
+      {planetModel && <Planet {...planetModel[0]} />}
     </>
   );
 };

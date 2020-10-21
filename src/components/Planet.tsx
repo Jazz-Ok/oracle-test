@@ -8,6 +8,12 @@ const formatDate = (date: string): string => {
   const isoDate = new Date(date);
   return `${isoDate.getDate()}/${isoDate.getMonth() + 1}/${isoDate.getFullYear()}`;
 };
+
+const StyledPlanetWrapper = styled.div`
+  display: inline-block;
+  margin: 5px;
+`;
+
 const StyledName = styled.h2`
   display: block;
   text-transform: uppercase;
@@ -17,6 +23,7 @@ const StyledName = styled.h2`
 const StyledInfoList = styled.ul`
   display: flex;
   flex-direction: column;
+  margin: 5px;
   padding: 0;
   list-style-type: none;
 `;
@@ -36,7 +43,7 @@ const Planet: React.FC<IPlanet> = ({
   surface_water,
   terrain
 }) => (
-  <>
+  <StyledPlanetWrapper>
     <StyledName>{name}</StyledName>
     {name && (
       <StyledInfoList>
@@ -54,7 +61,7 @@ const Planet: React.FC<IPlanet> = ({
         <InfoRow rowName={PlanetEnum.terrain} rowData={terrain} />
       </StyledInfoList>
     )}
-  </>
+  </StyledPlanetWrapper>
 );
 
 export default Planet;

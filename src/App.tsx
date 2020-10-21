@@ -20,6 +20,8 @@ interface IAppStyleProps {
 
 const StyledPagination = styled(Pagination)`
   display: flex;
+  position: relative;
+  flex-direction: column;
   justify-content: center;
 `;
 
@@ -47,10 +49,24 @@ const Spinner = styled.div`
   transform: translate(-50%, -50%);
 `;
 
+const StyledPlanetListing = styled.section`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  width: 88%;
+
+  @media (min-width: 900px) {
+    flex-direction: row;
+    width: auto;
+  }
+`;
+
 const App: React.FC = () => {
   const itemsPerPage = appConfig.ITEMS_PER_PAGE;
   const [isLoading, setLoading] = React.useState<boolean>(true);
   const [planetsList, setPlanetsList] = React.useState<IAllPlanets>(null);
+  const [planetModel, setPlanetModel] = React.useState<IPlanet>(null);
   const [page, setPage] = React.useState<number>(appConfig.START_PAGE);
   const [noOfPages] = React.useState(Math.ceil(planetsList?.results.length / itemsPerPage));
 
@@ -80,6 +96,10 @@ const App: React.FC = () => {
       .map((planet: IPlanet) => <Planet key={planet.name} {...planet} />);
   }, [page, planetsList?.results, itemsPerPage]);
 
+  const renderSearchedPlanet = React.useCallback(() => {
+    return <Planet {...planetModel} />;
+  }, [planetModel]);
+
   return (
     <IntlProvider locale="cs-CZ" messages={translations}>
       <GlobalStyle bodyBackground={appStyles.LIGHT} color={appStyles.DARK} />
@@ -88,8 +108,15 @@ const App: React.FC = () => {
           <CircularProgress color="secondary" />
         </Spinner>
       )}
-      {!isLoading && <Search storedPlanetModel={planetsList} clearState={setPlanetsList} />}
-      {!isLoading && planetsList && renderPlanets()}
+      {!isLoading && (
+        <Search
+          storedPlanetModel={planetsList}
+          clearAllState={setPlanetsList}
+          searchPlanetState={setPlanetModel}
+        />
+      )}
+      {!isLoading && planetsList && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
+      {!isLoading && planetModel && renderSearchedPlanet()}
 
       {planetsList && (
         <StyledPagination
