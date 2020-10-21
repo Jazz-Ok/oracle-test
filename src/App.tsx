@@ -22,7 +22,7 @@ const StyledPagination = styled(Pagination)`
   display: flex;
   position: relative;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
 `;
 
 const rootEl = document.getElementById('vladimir-app-root') as HTMLDivElement;
