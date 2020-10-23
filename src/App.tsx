@@ -65,40 +65,67 @@ const StyledPlanetListing = styled.section`
 const App: React.FC = () => {
   const itemsPerPage = appConfig.ITEMS_PER_PAGE;
   const [isLoading, setLoading] = React.useState<boolean>(true);
-  const [planetsList, setPlanetsList] = React.useState<IAllPlanets>(null);
-  const [planetModel, setPlanetModel] = React.useState<IPlanet>(null);
+  const [planetsObject, setPlanetsObject] = React.useState<IAllPlanets>(null);
+  const [planetList, setPlanetList] = React.useState<IPlanet[]>([]);
   const [page, setPage] = React.useState<number>(appConfig.START_PAGE);
-  const [noOfPages] = React.useState(Math.ceil(planetsList?.results.length / itemsPerPage));
+  const [noOfPages, setNoOfPages] = React.useState(
+    Math.ceil(planetsObject?.results.length / itemsPerPage)
+  );
+
+  const params = {
+    method: 'GET'
+  };
 
   React.useEffect(() => {
-    const params = {
-      method: 'GET'
-    };
-
     const fetchPlanets = () => {
       fetch(UrlEnum.ALL_PLANETS_URL, params)
         .then((res) => res.json())
-        .then((result) => {
-          setPlanetsList(result);
+        .then((result: IAllPlanets) => {
+          setPlanetsObject(result);
+          setPlanetList(result?.results);
+          setNoOfPages(Math.ceil(result?.results.length / itemsPerPage));
           setLoading(false);
         });
     };
     fetchPlanets();
   }, []);
 
-  const handlePageChange = (_, value) => {
-    setPage(value);
+  const handlePageChange = React.useCallback(
+    (_, value) => {
+      setPage(value);
+      if (value === noOfPages && planetsObject.next?.length) {
+        getNextPage();
+      }
+    },
+    [page, noOfPages, planetsObject]
+  );
+
+  const getNextPage = () => {
+    handleDataSet(planetsObject.next);
   };
 
+  const handleDataSet = React.useCallback((fetchUrl: string) => {
+    fetch(fetchUrl, params)
+      .then((res) => res.json())
+      .then((result: IAllPlanets) => {
+        setPlanetList(result?.results);
+        console.log(planetList);
+        setPlanetsObject(result);
+        setNoOfPages(Math.ceil(result?.results.length / itemsPerPage));
+        setLoading(false);
+      });
+  }, []);
+
   const renderPlanets = React.useCallback(() => {
-    return planetsList?.results
+    return planetsObject?.results
       .slice((page - 1) * itemsPerPage, page * itemsPerPage)
       .map((planet: IPlanet) => <Planet key={planet.name} {...planet} />);
-  }, [page, planetsList?.results, itemsPerPage]);
+  }, [page, planetsObject?.results, itemsPerPage]);
 
   const renderSearchedPlanet = React.useCallback(() => {
-    return <Planet {...planetModel} />;
-  }, [planetModel]);
+    console.log(planetList);
+    return <Planet {...planetList} />;
+  }, [planetList]);
 
   return (
     <IntlProvider locale="cs-CZ" messages={translations}>
@@ -110,15 +137,15 @@ const App: React.FC = () => {
       )}
       {!isLoading && (
         <Search
-          storedPlanetModel={planetsList}
-          clearAllState={setPlanetsList}
-          searchPlanetState={setPlanetModel}
+          storedplanetList={planetsObject}
+          clearAllState={setPlanetsObject}
+          searchPlanetState={setPlanetList}
         />
       )}
-      {!isLoading && planetsList && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
-      {!isLoading && planetModel && renderSearchedPlanet()}
+      {!isLoading && planetsObject && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
+      {!isLoading && planetList && renderSearchedPlanet()}
 
-      {planetsList && (
+      {planetsObject && (
         <StyledPagination
           showFirstButton
           showLastButton
