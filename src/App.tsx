@@ -12,6 +12,7 @@ import Search from 'components/Search';
 import appConfig from './configuration/app';
 import {IntlProvider} from 'react-intl';
 import {DEFAULT_TRANSLATIONS} from './Localizations';
+import formatUrl from './helpers/formatUrl';
 
 interface IAppStyleProps {
   bodyBackground: string;
@@ -67,6 +68,7 @@ const App: React.FC = () => {
   const [isLoading, setLoading] = React.useState<boolean>(true);
   const [planetsObject, setPlanetsObject] = React.useState<IAllPlanets>(null);
   const [planetList, setPlanetList] = React.useState<IPlanet[]>([]);
+  const [searchPlanet, setSearchPlanet] = React.useState<IPlanet>(null);
   const [page, setPage] = React.useState<number>(appConfig.START_PAGE);
   const [noOfPages, setNoOfPages] = React.useState(
     Math.ceil(planetsObject?.results.length / itemsPerPage)
@@ -96,6 +98,7 @@ const App: React.FC = () => {
       if (value === noOfPages && planetsObject.next?.length) {
         getNextPage();
       }
+      console.log(planetList);
     },
     [page, noOfPages, planetsObject]
   );
@@ -104,12 +107,15 @@ const App: React.FC = () => {
     handleDataSet(planetsObject.next);
   };
 
-  const handleDataSet = React.useCallback((fetchUrl: string) => {
+  const handleDataSet = React.useCallback((url: string) => {
+    const fetchUrl = formatUrl(url);
     fetch(fetchUrl, params)
       .then((res) => res.json())
       .then((result: IAllPlanets) => {
-        setPlanetList(result?.results);
-        console.log(planetList);
+        console.log('planetList ', planetList);
+        console.log('result?.results ', result?.results);
+        setPlanetList(planetList.concat(result?.results));
+        console.log('concat ', planetList);
         setPlanetsObject(result);
         setNoOfPages(Math.ceil(result?.results.length / itemsPerPage));
         setLoading(false);
@@ -124,7 +130,7 @@ const App: React.FC = () => {
 
   const renderSearchedPlanet = React.useCallback(() => {
     console.log(planetList);
-    return <Planet {...planetList} />;
+    return <Planet {...planetList[0]} />;
   }, [planetList]);
 
   return (
@@ -135,15 +141,8 @@ const App: React.FC = () => {
           <CircularProgress color="secondary" />
         </Spinner>
       )}
-      {!isLoading && (
-        <Search
-          storedplanetList={planetsObject}
-          clearAllState={setPlanetsObject}
-          searchPlanetState={setPlanetList}
-        />
-      )}
+      {!isLoading && <Search storedPlanetModel={planetsObject} clearAllState={setPlanetsObject} />}
       {!isLoading && planetsObject && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
-      {!isLoading && planetList && renderSearchedPlanet()}
 
       {planetsObject && (
         <StyledPagination

@@ -33,11 +33,11 @@ const StyledItemList = styled.ul`
   list-style-type: none;
 `;
 
-const renderList = (rowName, rowData) =>
+const renderList = (rowName: string, rowData: string[]) =>
   rowData.length > 0 && (
     <StyledInfoRow>
       <StyledInfoRowKey fullwidth>
-        <FormattedMessage id="films" />
+        <FormattedMessage id={rowName} />
       </StyledInfoRowKey>
       <StyledItemList>
         {rowData?.map((el) => (
@@ -47,7 +47,7 @@ const renderList = (rowName, rowData) =>
     </StyledInfoRow>
   );
 
-const renderItem = (rowName, rowData) =>
+const renderItem = (rowName: string, rowData: string) =>
   rowData.length > 0 && (
     <StyledInfoRow>
       <StyledInfoRowKey>
@@ -61,7 +61,7 @@ const InfoRow: React.FC<IInfoRow> = ({rowName, rowData}) => {
   if (rowData.constructor === Array) {
     return renderList(rowName, rowData);
   } else {
-    return renderItem(rowName, rowData);
+    return renderItem(rowName, rowData as string);
   }
 };
 export default InfoRow;

@@ -4,6 +4,7 @@ import {IFilm} from './IFilm';
 import {IResident} from './IResident';
 import {isFilmResponse} from '../guards/guards';
 import {FormattedMessage} from 'react-intl';
+import formatUrl from '../helpers/formatUrl';
 
 interface IItemProps {
   url: string;
@@ -23,16 +24,20 @@ const Item: React.FC<IItemProps> = ({url}) => {
   };
 
   React.useEffect(() => {
+    let isSubscribed = true;
     const getFilms = async () => {
-      const fetchUrl = url.replace(/^http:\/\//i, 'https://');
+      const fetchUrl = formatUrl(url);
 
       fetch(fetchUrl, params)
         .then((res) => res.json())
         .then((result) => {
-          isFilmResponse(result) ? setFilmData(result) : setResidentData(result);
+          if (isSubscribed) {
+            isFilmResponse(result) ? setFilmData(result) : setResidentData(result);
+          }
         });
     };
     getFilms();
+    return () => (isSubscribed = false);
   }, []);
 
   if (filmData || residentData) {

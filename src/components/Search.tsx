@@ -9,11 +9,11 @@ import {UrlEnum} from 'src/enums';
 import {IPlanet} from './IPlanet';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Planet from './Planet';
+import appConfig from '../configuration/app';
 
 interface ISearchProps {
   storedPlanetModel: IAllPlanets;
   clearAllState: (_: null) => void;
-  searchPlanetState: (_: IPlanet) => void;
 }
 
 const FormControl = styled.section`
@@ -33,7 +33,11 @@ const Spinner = styled(CircularProgress)`
   left: 7px;
 `;
 
-const Search: React.FC<ISearchProps> = ({clearAllState, searchPlanetState}) => {
+const StyledSearchResult = styled.div`
+  align-self: center;
+`;
+
+const Search: React.FC<ISearchProps> = ({clearAllState}) => {
   const inputEl = useRef<HTMLInputElement>(null);
   const [isButtonDisabled, setButtonDisabled] = React.useState<boolean>(true);
   const [isInputDisabled, setInputDisabled] = React.useState<boolean>(false);
@@ -64,20 +68,17 @@ const Search: React.FC<ISearchProps> = ({clearAllState, searchPlanetState}) => {
           );
           if (results?.length) {
             clearAllState(null);
-            searchPlanetState(results);
 
             setPlanetModel(results);
             inputEl.current.value = '';
             setButtonDisabled(false);
-          } else {
-            searchPlanetState(results);
           }
           setInputDisabled(false);
         });
     };
 
     let i = 0;
-    while (i < 6) {
+    while (i < appConfig.MAX_PAGE_FETCH) {
       fetchPlanets(planetsUrls[i]);
       if (results?.length) break;
       i++;
@@ -119,8 +120,7 @@ const Search: React.FC<ISearchProps> = ({clearAllState, searchPlanetState}) => {
           {isInputDisabled && <Spinner color="primary" size={10} />}
         </StyledButton>
       </FormControl>
-
-      {planetModel && <Planet {...planetModel[0]} />}
+      <StyledSearchResult>{planetModel && <Planet {...planetModel[0]} />}</StyledSearchResult>
     </>
   );
 };
