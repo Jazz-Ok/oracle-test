@@ -1,4 +1,3 @@
-import {IAllPlanets} from './IAllPlanets';
 import styled from 'styled-components';
 import React, {useCallback, useRef} from 'react';
 import TextField from '@material-ui/core/TextField';
@@ -8,11 +7,13 @@ import {FormattedMessage} from 'react-intl';
 import {IPlanet} from './IPlanet';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Planet from './Planet';
+import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 
 interface ISearchProps {
-  storedPlanetModel: IAllPlanets;
-  clearAllState: (_: null) => void;
+  clearAllState: (_: IPlanet[]) => void;
   planetList: IPlanet[];
+  setFetchUrl: (_: string | undefined) => void;
+  setNoOfPages: (_: number) => void;
 }
 
 const FormControl = styled.section`
@@ -36,7 +37,13 @@ const StyledSearchResult = styled.div`
   align-self: center;
 `;
 
-const Search: React.FC<ISearchProps> = ({clearAllState, planetList}) => {
+const StyledBackButton = withStyles({
+  root: {
+    marginRight: '5px'
+  }
+})(Button);
+
+const Search: React.FC<ISearchProps> = ({clearAllState, planetList, setFetchUrl, setNoOfPages}) => {
   const inputEl = useRef<HTMLInputElement>(null);
   const [isButtonDisabled, setButtonDisabled] = React.useState<boolean>(true);
   const [isInputDisabled, setInputDisabled] = React.useState<boolean>(false);
@@ -51,12 +58,19 @@ const Search: React.FC<ISearchProps> = ({clearAllState, planetList}) => {
     );
 
     if (searchResult?.length) {
-      clearAllState(null);
+      clearAllState([]);
       inputEl.current.value = '';
       setButtonDisabled(false);
       setPlanetModel(searchResult);
     }
     setInputDisabled(false);
+  }, [planetList]);
+
+  const handleBackClick = React.useCallback(() => {
+    clearAllState(planetList);
+    setPlanetModel(null);
+    setFetchUrl(undefined);
+    setNoOfPages(0);
   }, [planetList]);
 
   const handleInputChange = useCallback(() => {
@@ -70,6 +84,11 @@ const Search: React.FC<ISearchProps> = ({clearAllState, planetList}) => {
   return (
     <>
       <FormControl>
+        {planetModel && (
+          <StyledBackButton variant="outlined" color="primary" onClick={handleBackClick}>
+            <ArrowBackIosIcon />
+          </StyledBackButton>
+        )}
         <FormattedMessage id="planetName">
           {(placeholder) => (
             <TextField

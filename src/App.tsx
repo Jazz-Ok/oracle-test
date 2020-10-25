@@ -67,12 +67,9 @@ const StyledPlanetListing = styled.section`
 const App: React.FC = () => {
   const itemsPerPage = appConfig.ITEMS_PER_PAGE;
   const [isLoading, setLoading] = React.useState<boolean>(true);
-  const [planetsObject, setPlanetsObject] = React.useState<IAllPlanets>(null);
   const [planetList, setPlanetList] = React.useState<IPlanet[]>([]);
   const [page, setPage] = React.useState<number>(appConfig.START_PAGE);
-  const [noOfPages, setNoOfPages] = React.useState(
-    Math.ceil(planetsObject?.results.length / itemsPerPage)
-  );
+  const [noOfPages, setNoOfPages] = React.useState(0);
   const [fetchUrl, setFetchUrl] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
@@ -82,13 +79,10 @@ const App: React.FC = () => {
       if (result.next?.length) {
         setFetchUrl(result.next);
       } else {
-        setLoading(false);
-        setPlanetsObject(result);
         setNoOfPages(Math.ceil(planetList.length / itemsPerPage));
-        setPlanetList(planetList);
+        setLoading(false);
       }
     });
-    setLoading(false);
   }, [fetchUrl]);
 
   const handlePageChange = React.useCallback(
@@ -114,20 +108,21 @@ const App: React.FC = () => {
       )}
       {!isLoading && (
         <Search
-          storedPlanetModel={planetsObject}
-          clearAllState={setPlanetsObject}
+          clearAllState={setPlanetList}
           planetList={planetList}
+          setFetchUrl={setFetchUrl}
+          setNoOfPages={setNoOfPages}
         />
       )}
-      {!isLoading && planetsObject && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
+      {!isLoading && planetList && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
 
-      {planetsObject && (
+      {planetList.length > 1 && (
         <StyledPagination
-          showFirstButton
-          showLastButton
           defaultPage={page}
           count={noOfPages}
           page={page}
+          showFirstButton={false}
+          showLastButton={false}
           onChange={handlePageChange}
           variant="outlined"
           color="secondary"
