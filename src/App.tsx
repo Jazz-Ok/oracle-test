@@ -2,7 +2,6 @@ import React from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import {IAllPlanets} from './components/IAllPlanets';
 import {IPlanet} from './components/IPlanet';
-import {UrlEnum} from './enums';
 import appStyles from './configuration/styles';
 import Pagination from '@material-ui/lab/Pagination';
 import styled from 'styled-components';
@@ -12,7 +11,7 @@ import Search from 'components/Search';
 import appConfig from './configuration/app';
 import {IntlProvider} from 'react-intl';
 import {DEFAULT_TRANSLATIONS} from './Localizations';
-import formatUrl from './helpers/formatUrl';
+import {fetchAllPlanets} from './helpers/fetchAllPlanets';
 
 interface IAppStyleProps {
   bodyBackground: string;
@@ -35,6 +34,8 @@ const translations = rootEl?.dataset.translations
       ...JSON.parse(decodeURIComponent(rootEl.dataset.translations))
     }
   : DEFAULT_TRANSLATIONS;
+
+const planets = [];
 
 const GlobalStyle = createGlobalStyle`
 	body {
@@ -68,70 +69,40 @@ const App: React.FC = () => {
   const [isLoading, setLoading] = React.useState<boolean>(true);
   const [planetsObject, setPlanetsObject] = React.useState<IAllPlanets>(null);
   const [planetList, setPlanetList] = React.useState<IPlanet[]>([]);
-  const [searchPlanet, setSearchPlanet] = React.useState<IPlanet>(null);
   const [page, setPage] = React.useState<number>(appConfig.START_PAGE);
   const [noOfPages, setNoOfPages] = React.useState(
     Math.ceil(planetsObject?.results.length / itemsPerPage)
   );
-
-  const params = {
-    method: 'GET'
-  };
+  const [fetchUrl, setFetchUrl] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
-    const fetchPlanets = () => {
-      fetch(UrlEnum.ALL_PLANETS_URL, params)
-        .then((res) => res.json())
-        .then((result: IAllPlanets) => {
-          setPlanetsObject(result);
-          setPlanetList(result?.results);
-          setNoOfPages(Math.ceil(result?.results.length / itemsPerPage));
-          setLoading(false);
-        });
-    };
-    fetchPlanets();
-  }, []);
+    fetchAllPlanets(fetchUrl).then((result: IAllPlanets) => {
+      planets.concat(result?.results);
+      setPlanetList(planetList.concat(result?.results));
+      if (result.next?.length) {
+        setFetchUrl(result.next);
+      } else {
+        setLoading(false);
+        setPlanetsObject(result);
+        setNoOfPages(Math.ceil(planetList.length / itemsPerPage));
+        setPlanetList(planetList);
+      }
+    });
+    setLoading(false);
+  }, [fetchUrl]);
 
   const handlePageChange = React.useCallback(
     (_, value) => {
       setPage(value);
-      if (value === noOfPages && planetsObject.next?.length) {
-        getNextPage();
-      }
-      console.log(planetList);
     },
-    [page, noOfPages, planetsObject]
+    [page, planetList]
   );
 
-  const getNextPage = () => {
-    handleDataSet(planetsObject.next);
-  };
-
-  const handleDataSet = React.useCallback((url: string) => {
-    const fetchUrl = formatUrl(url);
-    fetch(fetchUrl, params)
-      .then((res) => res.json())
-      .then((result: IAllPlanets) => {
-        console.log('planetList ', planetList);
-        console.log('result?.results ', result?.results);
-        setPlanetList(planetList.concat(result?.results));
-        console.log('concat ', planetList);
-        setPlanetsObject(result);
-        setNoOfPages(Math.ceil(result?.results.length / itemsPerPage));
-        setLoading(false);
-      });
-  }, []);
-
   const renderPlanets = React.useCallback(() => {
-    return planetsObject?.results
+    return planetList
       .slice((page - 1) * itemsPerPage, page * itemsPerPage)
       .map((planet: IPlanet) => <Planet key={planet.name} {...planet} />);
-  }, [page, planetsObject?.results, itemsPerPage]);
-
-  const renderSearchedPlanet = React.useCallback(() => {
-    console.log(planetList);
-    return <Planet {...planetList[0]} />;
-  }, [planetList]);
+  }, [page, planetList, itemsPerPage]);
 
   return (
     <IntlProvider locale="cs-CZ" messages={translations}>
@@ -141,7 +112,13 @@ const App: React.FC = () => {
           <CircularProgress color="secondary" />
         </Spinner>
       )}
-      {!isLoading && <Search storedPlanetModel={planetsObject} clearAllState={setPlanetsObject} />}
+      {!isLoading && (
+        <Search
+          storedPlanetModel={planetsObject}
+          clearAllState={setPlanetsObject}
+          planetList={planetList}
+        />
+      )}
       {!isLoading && planetsObject && <StyledPlanetListing>{renderPlanets()}</StyledPlanetListing>}
 
       {planetsObject && (

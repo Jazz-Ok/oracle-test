@@ -5,15 +5,14 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import {withStyles} from '@material-ui/core';
 import {FormattedMessage} from 'react-intl';
-import {UrlEnum} from 'src/enums';
 import {IPlanet} from './IPlanet';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Planet from './Planet';
-import appConfig from '../configuration/app';
 
 interface ISearchProps {
   storedPlanetModel: IAllPlanets;
   clearAllState: (_: null) => void;
+  planetList: IPlanet[];
 }
 
 const FormControl = styled.section`
@@ -37,53 +36,28 @@ const StyledSearchResult = styled.div`
   align-self: center;
 `;
 
-const Search: React.FC<ISearchProps> = ({clearAllState}) => {
+const Search: React.FC<ISearchProps> = ({clearAllState, planetList}) => {
   const inputEl = useRef<HTMLInputElement>(null);
   const [isButtonDisabled, setButtonDisabled] = React.useState<boolean>(true);
   const [isInputDisabled, setInputDisabled] = React.useState<boolean>(false);
-  const [planetModel, setPlanetModel] = React.useState<IPlanet>(null);
+  const [planetModel, setPlanetModel] = React.useState<IPlanet[]>(null);
 
   const handleClick = React.useCallback(() => {
     setButtonDisabled(true);
     setInputDisabled(true);
-    const planets = [];
-    const planetsUrls = [
-      `${UrlEnum.ALL_PLANETS_URL}?page=1`,
-      `${UrlEnum.ALL_PLANETS_URL}?page=2`,
-      `${UrlEnum.ALL_PLANETS_URL}?page=3`,
-      `${UrlEnum.ALL_PLANETS_URL}?page=4`,
-      `${UrlEnum.ALL_PLANETS_URL}?page=5`,
-      `${UrlEnum.ALL_PLANETS_URL}?page=6`
-    ];
 
-    let results;
-    const fetchPlanets = (url: string) => {
-      fetch(url)
-        .then((res) => res.json())
-        .then((result) => {
-          planets.push(result.results);
-          results = result.results.filter(
-            (x: IPlanet) =>
-              x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
-          );
-          if (results?.length) {
-            clearAllState(null);
+    const searchResult = planetList.filter(
+      (x: IPlanet) => x.name.toLocaleLowerCase() === inputEl.current.value?.toLocaleLowerCase()
+    );
 
-            setPlanetModel(results);
-            inputEl.current.value = '';
-            setButtonDisabled(false);
-          }
-          setInputDisabled(false);
-        });
-    };
-
-    let i = 0;
-    while (i < appConfig.MAX_PAGE_FETCH) {
-      fetchPlanets(planetsUrls[i]);
-      if (results?.length) break;
-      i++;
+    if (searchResult?.length) {
+      clearAllState(null);
+      inputEl.current.value = '';
+      setButtonDisabled(false);
+      setPlanetModel(searchResult);
     }
-  }, []);
+    setInputDisabled(false);
+  }, [planetList]);
 
   const handleInputChange = useCallback(() => {
     setButtonDisabled(!inputEl.current.value.length);

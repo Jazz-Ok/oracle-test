@@ -1,3 +1,3 @@
-export default (url: string) => {
+export default (url: string): string => {
   return url.replace(/^http:\/\//i, 'https://');
 };

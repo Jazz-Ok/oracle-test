@@ -1,5 +1,5 @@
 export enum UrlEnum {
-  ALL_PLANETS_URL = 'https://swapi.dev/api/planets/'
+  ALL_PLANETS_FETCH_URL = 'https://swapi.dev/api/planets/'
 }
 
 export enum PlanetEnum {
